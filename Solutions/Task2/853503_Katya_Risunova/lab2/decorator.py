@@ -1,17 +1,12 @@
 def cached(func):
-    fibonachi = {}
-
-    def hash_table(a):
-        if fibonachi.get(to_key(a)):
-            print(a, "fibonachi: ", end=" ")
-            return fibonachi[to_key(a)]
-        else:
-            print("Now calculated: ", end=" ")
-            fibonachi[to_key(a)] = func(a)
-
-            return func(a)
-    return hash_table
-
+    cache = dict()
+    def memorize(*args):
+        if args in cache:
+            return str(cache[args]) + " cached"
+        result = func(*args)
+        cache[args] = result
+        return str(result) + " now"
+    return memorize
 
 @cached
 def fibonachi(a):
@@ -23,12 +18,22 @@ def fibonachi(a):
         k , m = m, k + m
     return toreturn
 
-def to_key(a):
-    return str(a)
+@cached
+def sumFibonachi(a):
+    sum = 0
+    k = 1
+    m = 1
+    for _ in range(a):
+        sum += k
+        k, m = m, k + m
+    return sum
+
+
+
 
 
 if __name__ == "__main__":
     print(fibonachi(6))
     print(fibonachi(13))
     print(fibonachi(6))
-
+    print (sumFibonachi(6))
