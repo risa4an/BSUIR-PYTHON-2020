@@ -4,51 +4,110 @@ class Book(object):
         self.name = "Harry Potter"
         self.pages = 346
 
-def from_json(text, obj):
-    working_word = ""
-    write_symbol = False
-    is_digit = False
-    key_value = []
-    for symbol in text:
-        if symbol.isdigit():
-            working_word += symbol
-            is_digit = True
-        elif symbol.isdigit() is False and is_digit is True:
-            key_value.append(working_word)
-            is_digit = False
-            working_word = ""
 
-        if write_symbol and symbol != '"':
-            working_word += symbol
-        elif write_symbol and symbol != " " and symbol != '"':
-            working_word += symbol
+def get_dict(text, i):
+    d = dict()
+    name = ''
+    while text[i] != '}':
+        if text[i] == '"':
+            i += 1
+            while (text[i] != '"'):
+                name += text[i]
+                i+=1
+        elif text[i] ==':':
+            i += 1
+            value, i = get_value(text,i)
+            d[name] = value
+            name = ''
+            while (text[i] != '\n'):
+                i += 1
+        i+= 1
+    return d,i
 
-        if symbol == '"' and write_symbol is False:
-            write_symbol = True
-        elif symbol == '"' and write_symbol:
-            key_value.append(working_word)
-            write_symbol = False
-            working_word = ""
 
-    i = 0
-    for key, value in obj.__dict__.items():
-        if str(key) == key_value[i]:
-            if type(value) is int:
-                setattr(obj, key, int(key_value[i + 1]))
-            elif type(value) is float:
-                setattr(obj, key, float(key_value[i + 1]))
-            elif type(value) is complex:
-                setattr(obj, key, complex(key_value[i + 1]))
-            elif type(value) is str:
-                setattr(obj, key, key_value[i + 1])
-            elif type(value) is bool:
-                setattr(obj, key, bool(key_value[i + 1]))
-        i += 2
+
+def get_value(text, i):
+    value = ''
+    if text[i] == '"':
+        i += 1
+        while text[i] != '"':
+            value += text[i]
+            i += 1
+    elif text[i] == 'F':
+        value = False
+    elif text[i] == 'T':
+        value = True
+    else:
+        while text[i] != ',' and text[i] != '\n':
+            value += text[i]
+            i += 1
+        if '.' in value:
+            value = float(value)
+        else:
+            value = int(value)
+    return value, i
+
+
+def get_arr(text,i):
+    arr = []
+    while(text[i] != ']'):
+        if text[i] == '{':
+            value, i = get_dict(text,i)
+
+        else:
+            value, i = get_value(text, i)
+        while (text[i] != '\n'):
+            i += 1
+        i += 1
+        arr.append(value)
+        value = ''
+    return arr, i
+
+
+
+
+def from_json(text, i):
+    openbrackets = 0
+    closebrackets = 0
+    name = ''
+    obj = ''
+    if text[i] == '{':
+        openbrackets += 1
+        i+=1
+    while (openbrackets != closebrackets):
+        if text[i] == '{':
+            openbrackets += 1
+        elif text[i] == '"':
+            i += 1
+            name = ''
+            while (text[i] != '"'):
+                name += text[i]
+                i += 1
+        elif text[i] == ':':
+            i += 1
+
+            if text[i] == '[':
+                i+=2
+                globals()[name], i = get_arr(text, i)
+            elif text[i] == '{':
+                i += 2
+                globals()[name], i = get_dict(text, i)
+            else:
+                value, i = get_value(text,i)
+                globals()[name] = value
+
+
+
+        elif text[i] == '}':
+            closebrackets += 1
+        i += 1
     return obj
 
 
+
+
 if __name__ == "__main__":
-    book = Book()
-    print("Old: ", book.__dict__)
-    person = from_json('{"author": "J.K. Rowling", "name": "Harry Potter", "greeting": 346}', book)
-    print("New: ", book.__dict__)
+    s = '{ \n"k"  :[\n{\n"author" :"J.K. Rowling",\n"name" :"Harry Potter",\n"pages" :346\n},\n{\n"author" :"H.Murakami",\n"name" :"Killing comrade",\n"pages" :143\n}\n]\n}'
+
+    from_json(s, 0)
+    print(k)
